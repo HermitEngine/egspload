@@ -1,0 +1,18 @@
+InnerStruct
+{
+	uint64_t dummy;
+};
+
+TestStruct
+{
+	uint32_t testint;
+	float testfloat;
+	int16_t testsigned;
+	uint32_t structcount;
+	InnerStruct teststruct[structcount];
+	InnerStruct* pointerstruct;
+	InnerStruct* nullstruct;
+	InnerStruct inlinestruct;
+	string TestString;
+	TestEnum% testenum;
+};

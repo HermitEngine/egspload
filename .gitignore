@@ -1,0 +1,12 @@
+build/**
+egspload.dir/**
+egsptest.dir/**
+egsploader.dir/**
+x64/**
+bin/**
+lib/**
+tags
+CMakeCache.txt
+CMakeFiles/**
+Makefile
+cmake_install.cmake
