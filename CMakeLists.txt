@@ -28,6 +28,8 @@ set(TEST_SRC
 
 add_library(egspload ${LIB_SRC})
 add_executable(egsploader ${SRC})
+set_target_properties(egspload PROPERTIES FOLDER "Egspload")
+set_target_properties(egsploader PROPERTIES FOLDER "Egspload")
 
 if(EGSP_BUILD_TESTS)
 	add_custom_command(TARGET egsploader
@@ -39,6 +41,7 @@ if(EGSP_BUILD_TESTS)
 	add_dependencies(egsptest egsploader)
 	target_link_libraries(egsptest egspload)
 	include_directories(src)
+	set_target_properties(egsptest PROPERTIES FOLDER "Egspload")
 endif(EGSP_BUILD_TESTS)
 
 if(EGSP_JSON)

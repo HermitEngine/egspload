@@ -92,6 +92,7 @@ EgspResult _EgspReadint16_t(EgspLoader* pLoader, int16_t* pVal);
 EgspResult _EgspReaduint8_t(EgspLoader* pLoader, uint8_t* pVal);
 EgspResult _EgspReadint8_t(EgspLoader* pLoader, int8_t* pVal);
 EgspResult _EgspReadstring(EgspLoader* pLoader, const char** ppString);
+EgspResult _EgspSkipPastChar(EgspLoader* pLoader, char character);
 EgspResult _EgspSkipLabel(EgspLoader* pLoader);
 #endif // EGSP_JSON
 #endif

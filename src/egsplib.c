@@ -529,7 +529,7 @@ EgspResult _EgspPrintstring(EgspLoader* pLoader, const char** ppString)
 {
 	uint32_t length = (uint32_t)strlen(*ppString);
 	pLoader->heapSize += EgspPad(length + 1);
-	EGSP_TRY(_EgspWriteChar(pLoader, '"'));
+	EGSP_TRY(_EgspWriteString(pLoader, "\""));
 	for (const char* pChr = *ppString; *pChr != '\0'; ++pChr)
 	{
 		// List from http://json.org/. Unicode(\u) not supported.
@@ -571,8 +571,7 @@ EgspResult _EgspPrintstring(EgspLoader* pLoader, const char** ppString)
 			EGSP_TRY(_EgspWriteChar(pLoader, *pChr));
 		}
 	}
-	EGSP_TRY(_EgspWriteChar(pLoader, '"'));
-	EGSP_TRY(_EgspWriteString(pLoader, ","));
+	EGSP_TRY(_EgspWriteString(pLoader, "\","));
 	return EGSP_SUCCESS;
 }
 
@@ -659,16 +658,21 @@ EgspResult _EgspReadstring(EgspLoader* pLoader, const char** ppString)
 	return EGSP_SUCCESS;
 }
 
-EgspResult _EgspSkipLabel(EgspLoader* pLoader)
+EgspResult _EgspSkipPastChar(EgspLoader* pLoader, char character)
 {
 	char chr = '\0';
 	size_t pos = 0;
-	while (chr != ':')
+	while (chr != character)
 	{
 		EGSP_TRY(CheckOverFlow(pLoader));
 		chr = pLoader->pData[pLoader->offset++];
 	}
 	return EGSP_SUCCESS;
+}
+
+EgspResult _EgspSkipLabel(EgspLoader* pLoader)
+{
+	return _EgspSkipPastChar(pLoader, ':');
 }
 
 #endif

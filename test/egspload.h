@@ -3,6 +3,9 @@
 #ifndef EGSPLOAD_H
 #define EGSPLOAD_H
 
+#pragma warning(push)
+#pragma warning(disable: 4090)
+#define EGSP_JSON
 #include "egsplib.h"
 
 static EgspResult _EgspLoadInnerStruct(EgspLoader* pLoader, InnerStruct* pVal)
@@ -59,7 +62,7 @@ static EgspResult EgspPrintInnerStruct(EgspFunc pFlushFunc, InnerStruct* pVal, s
 	loader.heapSize = 0;
 	loader.last = 0;
 	loader.indent = 0;
-	EGSP_TEST(loader.pData = loader.pFunc(EgspBlockSize()));
+	EGSP_TEST(loader.pData = loader.pFunc(0));
 	EGSP_TRY(_EgspPrintInnerStruct(&loader, pVal));
 	EGSP_TRY(EgspFlush(&loader));
 	*pHeapRequired = loader.heapSize;
@@ -93,7 +96,7 @@ static EgspResult _EgspLoadTestStruct(EgspLoader* pLoader, TestStruct* pVal)
 	EGSP_TRY(_EgspLoadfloat(pLoader, &pVal->testfloat));
 	EGSP_TRY(_EgspLoadint16_t(pLoader, &pVal->testsigned));
 	EGSP_TRY(_EgspLoaduint32_t(pLoader, &pVal->structcount));
-	if (pVal->teststruct = EgspAlloc(pLoader, EgspPad(sizeof(InnerStruct)) * pVal->structcount))
+	if (pVal->teststruct = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->teststruct)) * pVal->structcount))
 	{
 		for (size_t i = 0; i < pVal->structcount; ++i)
 		{
@@ -267,7 +270,7 @@ static EgspResult EgspPrintTestStruct(EgspFunc pFlushFunc, TestStruct* pVal, siz
 	loader.heapSize = 0;
 	loader.last = 0;
 	loader.indent = 0;
-	EGSP_TEST(loader.pData = loader.pFunc(EgspBlockSize()));
+	EGSP_TEST(loader.pData = loader.pFunc(0));
 	EGSP_TRY(_EgspPrintTestStruct(&loader, pVal));
 	EGSP_TRY(EgspFlush(&loader));
 	*pHeapRequired = loader.heapSize;
@@ -285,9 +288,9 @@ static EgspResult _EgspReadTestStruct(EgspLoader* pLoader, TestStruct* pVal)
 	EGSP_TRY(_EgspReadint16_t(pLoader, &pVal->testsigned));
 	EGSP_TRY(_EgspSkipLabel(pLoader));
 	EGSP_TRY(_EgspReaduint32_t(pLoader, &pVal->structcount));
-	if (pVal->teststruct = EgspAlloc(pLoader, EgspPad(sizeof(InnerStruct)) * pVal->structcount))
+	if (pVal->teststruct = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->teststruct)) * pVal->structcount))
 	{
-		EGSP_TRY(_EgspSkipLabel(pLoader));
+		EGSP_TRY(_EgspSkipPastChar(pLoader, '['));
 		for (size_t i = 0; i < pVal->structcount; ++i)
 		{
 			EGSP_TRY(_EgspReadInnerStruct(pLoader, pVal->teststruct + i));
@@ -297,7 +300,7 @@ static EgspResult _EgspReadTestStruct(EgspLoader* pLoader, TestStruct* pVal)
 	EGSP_TRY(_EgspReaduint8_t(pLoader, &egspNullCheck));
 	if (egspNullCheck)
 	{
-		EGSP_TEST(pVal->pointerstruct = EgspAlloc(pLoader, EgspPad(sizeof(InnerStruct))))
+		EGSP_TEST(pVal->pointerstruct = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->pointerstruct))))
 		EGSP_TRY(_EgspSkipLabel(pLoader));
 		EGSP_TRY(_EgspReadInnerStruct(pLoader, pVal->pointerstruct));
 	}
@@ -309,7 +312,7 @@ static EgspResult _EgspReadTestStruct(EgspLoader* pLoader, TestStruct* pVal)
 	EGSP_TRY(_EgspReaduint8_t(pLoader, &egspNullCheck));
 	if (egspNullCheck)
 	{
-		EGSP_TEST(pVal->nullstruct = EgspAlloc(pLoader, EgspPad(sizeof(InnerStruct))))
+		EGSP_TEST(pVal->nullstruct = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->nullstruct))))
 		EGSP_TRY(_EgspSkipLabel(pLoader));
 		EGSP_TRY(_EgspReadInnerStruct(pLoader, pVal->nullstruct));
 	}
@@ -342,4 +345,5 @@ static EgspResult EgspReadTestStruct(EgspFunc pLoadFunc, TestStruct* pVal, void*
 	return EGSP_SUCCESS;
 }
 
+#pragma warning(pop)
 #endif
