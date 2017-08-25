@@ -20,6 +20,7 @@ typedef enum
 	ARRAY,
 	POINTER,
 	ENUM,
+	BUFFER,
 	DEFAULT
 } DataType;
 
@@ -205,6 +206,33 @@ static void AddField()
 			"\t}\n"
 			, s_fields[VAR_NAME], s_fields[VAR_NAME], s_fields[LIST_SIZE], s_fields[LIST_SIZE]
 			, s_fields[DATA_TYPE], s_fields[VAR_NAME]);
+#endif
+		break;
+
+	case BUFFER:
+		s_buffers.pLoad += sprintf(s_buffers.pLoad,
+			"\tif (pVal->%s = EgspAlloc(pLoader, EgspPad(pVal->%s)))\n"
+			"\t{\n"
+			"\t\tEGSP_TRY(_EgspLoadBuffer(pLoader, &pVal->%s, pVal->%s));\n"
+			"\t}\n"
+			, s_fields[VAR_NAME], s_fields[LIST_SIZE], s_fields[VAR_NAME], s_fields[LIST_SIZE]);
+
+		s_buffers.pSave += sprintf(s_buffers.pSave,
+			"\tpLoader->heapSize += EgspPad(pVal->%s);\n"
+			"\tEGSP_TRY(_EgspSaveBuffer(pLoader, pVal->%s, pVal->%s));\n"
+			,s_fields[LIST_SIZE], s_fields[VAR_NAME], s_fields[LIST_SIZE]);
+#ifdef EGSP_JSON
+		s_buffers.pPrint += sprintf(s_buffers.pPrint,
+			"\tpLoader->heapSize += EgspPad(pVal->%s);\n"
+			"\tEGSP_TRY(_EgspWriteString(pLoader, \"\\\"%s\\\":\"));\n"
+			"\tEGSP_TRY(_EgspPrintBuffer(pLoader, pVal->%s, pVal->%s));\n"
+			, s_fields[LIST_SIZE], s_fields[VAR_NAME], s_fields[VAR_NAME], s_fields[LIST_SIZE]);
+
+		s_buffers.pRead += sprintf(s_buffers.pRead,
+			"\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, EgspPad(pVal->%s)))\n"
+			"\tEGSP_TRY(_EgspSkipLabel(pLoader));\n"
+			"\tEGSP_TRY(_EgspReadBuffer(pLoader, pVal->%s, pVal->%s ));\n"
+			, s_fields[VAR_NAME], s_fields[LIST_SIZE], s_fields[VAR_NAME], s_fields[LIST_SIZE]);
 #endif
 		break;
 
@@ -413,11 +441,12 @@ static int ProcessVarName(char chr)
 		return DATA_TYPE;
 	}
 
-	if (chr == '[')
+	if (chr == '[' || chr == '(')
 	{
 		ErrorCheck(s_curpos == 0, "Expected variable name");
 		s_fields[VAR_NAME][s_curpos] = '\0';
 		s_curpos = 0;
+		s_type = chr == '[' ? ARRAY : BUFFER;
 		return LIST_SIZE;
 	}
 
@@ -428,11 +457,11 @@ static int ProcessVarName(char chr)
 
 static int ProcessListSize(char chr)
 {
-	if (chr == ']')
+	if (chr == ']' || chr == ')')
 	{
 		ErrorCheck(s_curpos == 0, "Expected list size");
 		s_fields[LIST_SIZE][s_curpos] = '\0';
-		s_type = ARRAY;
+		ErrorCheck(s_type != (chr == ']' ? ARRAY : BUFFER), "Wrong list type");
 		return LIST_SIZE;
 	}
 	if (chr == ';')

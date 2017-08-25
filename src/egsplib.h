@@ -47,6 +47,8 @@ EgspResult _EgspLoaduint32_t(EgspLoader* pLoader, uint32_t* pVal);
 EgspResult _EgspSaveuint32_t(EgspLoader* pLoader, uint32_t* pVal);
 EgspResult _EgspLoadint32_t(EgspLoader* pLoader, int32_t* pVal);
 EgspResult _EgspSaveint32_t(EgspLoader* pLoader, int32_t* pVal);
+EgspResult _EgspLoadsize_t(EgspLoader* pLoader, size_t* pVal);
+EgspResult _EgspSavesize_t(EgspLoader* pLoader, size_t* pVal);
 EgspResult _EgspLoadfloat(EgspLoader* pLoader, float* pVal);
 EgspResult _EgspSavefloat(EgspLoader* pLoader, float* pVal);
 
@@ -66,6 +68,10 @@ EgspResult _EgspSaveInt8(EgspLoader* pLoader, int8_t* pVal);
 EgspResult _EgspLoadstring(EgspLoader* pLoader, const char** ppString);
 EgspResult _EgspSavestring(EgspLoader* pLoader, const char** ppString);
 
+// Buffer
+EgspResult _EgspLoadBuffer(EgspLoader* pLoader, void* pBuffer, size_t size);
+EgspResult _EgspSaveBuffer(EgspLoader* pLoader, void* pBuffer, size_t size);
+
 #ifdef EGSP_JSON
 // JsonPrint
 EgspResult _EgspWriteString(EgspLoader* pLoader, const char* pString);
@@ -74,24 +80,29 @@ EgspResult _EgspPrintint64_t(EgspLoader* pLoader, int64_t* pVal);
 EgspResult _EgspPrintdouble(EgspLoader* pLoader, double* pVal);
 EgspResult _EgspPrintuint32_t(EgspLoader* pLoader, uint32_t* pVal);
 EgspResult _EgspPrintint32_t(EgspLoader* pLoader, int32_t* pVal);
+EgspResult _EgspPrintsize_t(EgspLoader* pLoader, size_t* pVal);
 EgspResult _EgspPrintfloat(EgspLoader* pLoader, float* pVal);
 EgspResult _EgspPrintuint16_t(EgspLoader* pLoader, uint16_t* pVal);
 EgspResult _EgspPrintint16_t(EgspLoader* pLoader, int16_t* pVal);
 EgspResult _EgspPrintuint8_t(EgspLoader* pLoader, uint8_t* pVal);
 EgspResult _EgspPrintint8_t(EgspLoader* pLoader, int8_t* pVal);
 EgspResult _EgspPrintstring(EgspLoader* pLoader, const char** ppString);
+EgspResult _EgspPrintBuffer(EgspLoader* pLoader, void* pBuffer, size_t size);
 
 EgspResult _EgspReaduint64_t(EgspLoader* pLoader, uint64_t* pVal);
 EgspResult _EgspReadint64_t(EgspLoader* pLoader, int64_t* pVal);
 EgspResult _EgspReaddouble(EgspLoader* pLoader, double* pVal);
 EgspResult _EgspReaduint32_t(EgspLoader* pLoader, uint32_t* pVal);
 EgspResult _EgspReadint32_t(EgspLoader* pLoader, int32_t* pVal);
+EgspResult _EgspReadsize_t(EgspLoader* pLoader, size_t* pVal);
 EgspResult _EgspReadfloat(EgspLoader* pLoader, float* pVal);
 EgspResult _EgspReaduint16_t(EgspLoader* pLoader, uint16_t* pVal);
 EgspResult _EgspReadint16_t(EgspLoader* pLoader, int16_t* pVal);
 EgspResult _EgspReaduint8_t(EgspLoader* pLoader, uint8_t* pVal);
 EgspResult _EgspReadint8_t(EgspLoader* pLoader, int8_t* pVal);
 EgspResult _EgspReadstring(EgspLoader* pLoader, const char** ppString);
+EgspResult _EgspReadBuffer(EgspLoader* pLoader, void* pBuffer, size_t size);
+
 EgspResult _EgspSkipPastChar(EgspLoader* pLoader, char character);
 EgspResult _EgspSkipLabel(EgspLoader* pLoader);
 #endif // EGSP_JSON

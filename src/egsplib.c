@@ -9,7 +9,6 @@
 static size_t EGSP_BLOCK_SIZE = 4096;
 static size_t ALIGN_BYTES = 2;
 
-
 // Utility
 size_t EgspPad(size_t bytes)
 {
@@ -142,6 +141,15 @@ EgspResult _EgspSaveint32_t(EgspLoader* pLoader, int32_t* pVal)
 	return _EgspSaveuint32_t(pLoader, (uint32_t*)pVal);
 }
 
+EgspResult _EgspLoadsize_t(EgspLoader* pLoader, size_t* pVal)
+{
+	return _EgspLoaduint32_t(pLoader, (uint32_t*)pVal);
+}
+
+EgspResult _EgspSavesize_t(EgspLoader* pLoader, size_t* pVal)
+{
+	return _EgspSaveuint32_t(pLoader, (uint32_t*)pVal);
+}
 
 EgspResult _EgspLoadfloat(EgspLoader* pLoader, float* pVal)
 {
@@ -255,6 +263,30 @@ EgspResult _EgspSavestring(EgspLoader* pLoader, const char** ppString)
 
 	memcpy(pLoader->pData + pLoader->offset, *ppString + pos, length - pos);
 	pLoader->offset += length - pos;
+	return EGSP_SUCCESS;
+}
+
+// Buffer
+// TODO: Optimize by block size
+EgspResult _EgspLoadBuffer(EgspLoader* pLoader, void* pBuffer, size_t size)
+{
+	uint8_t* pData = pBuffer;
+	for (size_t i = 0; i < size; ++i)
+	{
+		EGSP_TRY(CheckOverFlow(pLoader));
+		pData[i] = pLoader->pData[pLoader->offset++];
+	}
+	return EGSP_SUCCESS;
+}
+
+EgspResult _EgspSaveBuffer(EgspLoader* pLoader, void* pBuffer, size_t size)
+{
+	uint8_t* pData = pBuffer;
+	for (size_t i = 0; i < size; ++i)
+	{
+		EGSP_TRY(CheckOverFlow(pLoader));
+		pLoader->pData[pLoader->offset++] = pData[i];
+	}
 	return EGSP_SUCCESS;
 }
 
@@ -423,6 +455,20 @@ EgspResult _EgspReaduint32_t(EgspLoader* pLoader, uint32_t* pVal)
 	return EGSP_SUCCESS;
 }
 
+EgspResult _EgspPrintsize_t(EgspLoader* pLoader, size_t* pVal)
+{
+	uint32_t val = (uint32_t)*pVal;
+	return _EgspPrintuint32_t(pLoader, &val);
+}
+
+EgspResult _EgspReadsize_t(EgspLoader* pLoader, size_t* pVal)
+{
+	uint32_t val = 0;
+	_EgspReaduint32_t(pLoader, &val);
+	*pVal = (size_t)val;
+	return EGSP_SUCCESS;
+}
+
 EgspResult _EgspPrintint32_t(EgspLoader* pLoader, int32_t* pVal)
 {
 	char buffer[EGSP_NUMERIC_BUFFER_LENGTH];
@@ -527,11 +573,12 @@ EgspResult _EgspReadint8_t(EgspLoader* pLoader, int8_t* pVal)
 
 EgspResult _EgspPrintstring(EgspLoader* pLoader, const char** ppString)
 {
-	uint32_t length = (uint32_t)strlen(*ppString);
+	uint32_t length = *ppString ? (uint32_t)strlen(*ppString) : 0;
 	pLoader->heapSize += EgspPad(length + 1);
 	EGSP_TRY(_EgspWriteString(pLoader, "\""));
-	for (const char* pChr = *ppString; *pChr != '\0'; ++pChr)
+	for (uint32_t i = 0; i < length; ++i)
 	{
+		const char* pChr = *ppString + i;
 		// List from http://json.org/. Unicode(\u) not supported.
 		switch (*pChr)
 		{
@@ -558,10 +605,6 @@ EgspResult _EgspPrintstring(EgspLoader* pLoader, const char** ppString)
 		case '\\':
 			EGSP_TRY(_EgspWriteChar(pLoader, '\\'));
 			EGSP_TRY(_EgspWriteChar(pLoader, '\\'));
-			break;
-		case '/':
-			EGSP_TRY(_EgspWriteChar(pLoader, '\\'));
-			EGSP_TRY(_EgspWriteChar(pLoader, '/'));
 			break;
 		case '\f':
 			EGSP_TRY(_EgspWriteChar(pLoader, '\\'));
@@ -655,6 +698,86 @@ EgspResult _EgspReadstring(EgspLoader* pLoader, const char** ppString)
 	EGSP_TRY(_EgspReadChar(pLoader, &pos, &pBuffer, '\0'));
 	_EgspReverseBlocks(pBuffer, pFirst);
 	*ppString = pBuffer;
+	return EGSP_SUCCESS;
+}
+
+EgspResult _EgspPrintBuffer(EgspLoader* pLoader, void* pBuffer, size_t size)
+{
+	const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	EGSP_TRY(_EgspWriteString(pLoader, "\""));
+	uint8_t datum;
+	uint8_t* pData = pBuffer;
+	for (size_t i = 0; i < size; ++i)
+	{
+		switch (i % 3)
+		{
+		case 0:
+			datum = (pData[i] & 0xFC) >> 2;
+			_EgspWriteChar(pLoader, b64[datum]);
+			datum = (pData[i] & 0x3) << 6;
+			break;
+		case 1:
+			datum |= (pData[i] & 0xF0) >> 4;
+			_EgspWriteChar(pLoader, b64[datum]);
+			datum = (pData[i] & 0x0F) << 2;
+			break;
+		case 2:
+			datum |= (pData[i] & 0xC0) >> 6;
+			_EgspWriteChar(pLoader, b64[datum]);
+			datum = (pData[i] & 0x3F);
+			_EgspWriteChar(pLoader, b64[datum]);
+			break;
+		}
+	}
+	if (size % 3 != 0)
+	{
+		_EgspWriteChar(pLoader, b64[datum]);
+	}
+	return _EgspWriteString(pLoader, "\"");
+}
+
+EgspResult _EgspReadBuffer(EgspLoader* pLoader, void* pBuffer, size_t size)
+{
+	const uint8_t b64[256] = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 62, 63, 62, 62, 63, 52, 53, 54, 55,
+		56, 57, 58, 59, 60, 61,  0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  6,
+		7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,  0,
+		0,  0,  0, 63,  0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+		41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 };
+
+	char chr = '\0';
+	while (chr != '"')
+	{
+		EGSP_TRY(CheckOverFlow(pLoader));
+		chr = pLoader->pData[pLoader->offset++];
+	}
+
+	chr = '\0';
+	int i = 0;
+	uint8_t* pData = pBuffer;
+	while (i < size && chr != '"')
+	{
+		EGSP_TRY(CheckOverFlow(pLoader));
+		chr = pLoader->pData[pLoader->offset++];
+		switch (i % 4)
+		{
+		case 0:
+			pData[i] = b64[chr] << 2;
+			break;
+		case 1:
+			pData[i++] |= (b64[chr] & 0x30) >> 6;
+			pData[i] = (b64[chr] & 0x0F) << 4;
+			break;
+		case 2:
+			pData[i++] |= (b64[chr] & 0x3C) >> 4;
+			pData[i] = (b64[chr] & 0x03) << 6;
+			break;
+		case 3:
+			pData[i++] |= b64[chr];
+			break;
+		}
+	}
 	return EGSP_SUCCESS;
 }
 
