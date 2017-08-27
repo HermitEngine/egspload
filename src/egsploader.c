@@ -165,7 +165,7 @@ static void AddField()
 	{
 	case ARRAY:
 		s_buffers.pLoad += sprintf(s_buffers.pLoad, 
-			"\tif (pVal->%s = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->%s)) * pVal->%s))\n"
+			"\tif (pVal->%s = EgspAlloc(pLoader, sizeof(*pVal->%s) * pVal->%s))\n"
 			"\t{\n"
 			"\t\tfor (size_t i = 0; i < pVal->%s; ++i)\n"
 			"\t\t{\n"
@@ -196,7 +196,7 @@ static void AddField()
 			, s_fields[DATA_TYPE], s_fields[VAR_NAME]);
 
 		s_buffers.pRead += sprintf(s_buffers.pRead,
-			"\tif (pVal->%s = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->%s)) * pVal->%s))\n"
+			"\tif (pVal->%s = EgspAlloc(pLoader, sizeof(*pVal->%s) * pVal->%s))\n"
 			"\t{\n"
 			"\t\tEGSP_TRY(_EgspSkipPastChar(pLoader, '['));\n"
 			"\t\tfor (size_t i = 0; i < pVal->%s; ++i)\n"
@@ -211,7 +211,7 @@ static void AddField()
 
 	case BUFFER:
 		s_buffers.pLoad += sprintf(s_buffers.pLoad,
-			"\tif (pVal->%s = EgspAlloc(pLoader, EgspPad(pVal->%s)))\n"
+			"\tif (pVal->%s = EgspAlloc(pLoader, pVal->%s))\n"
 			"\t{\n"
 			"\t\tEGSP_TRY(_EgspLoadBuffer(pLoader, &pVal->%s, pVal->%s));\n"
 			"\t}\n"
@@ -229,7 +229,7 @@ static void AddField()
 			, s_fields[LIST_SIZE], s_fields[VAR_NAME], s_fields[VAR_NAME], s_fields[LIST_SIZE]);
 
 		s_buffers.pRead += sprintf(s_buffers.pRead,
-			"\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, EgspPad(pVal->%s)))\n"
+			"\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, pVal->%s))\n"
 			"\tEGSP_TRY(_EgspSkipLabel(pLoader));\n"
 			"\tEGSP_TRY(_EgspReadBuffer(pLoader, pVal->%s, pVal->%s ));\n"
 			, s_fields[VAR_NAME], s_fields[LIST_SIZE], s_fields[VAR_NAME], s_fields[LIST_SIZE]);
@@ -241,7 +241,7 @@ static void AddField()
 			"\tEGSP_TRY(_EgspLoaduint8_t(pLoader, &egspNullCheck));\n"
 			"\tif (egspNullCheck)\n"
 			"\t{\n"
-			"\t\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, EgspPad(sizeof(%s))))\n"
+			"\t\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, sizeof(%s)))\n"
 			"\t\tEGSP_TRY(_EgspLoad%s(pLoader, pVal->%s));\n"
 			"\t}\n"
 			"\telse\n"
@@ -289,7 +289,7 @@ static void AddField()
 			"\tEGSP_TRY(_EgspReaduint8_t(pLoader, &egspNullCheck));\n"
 			"\tif (egspNullCheck)\n"
 			"\t{\n"
-			"\t\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, EgspPad(sizeof(*pVal->%s))))\n"
+			"\t\tEGSP_TEST(pVal->%s = EgspAlloc(pLoader, sizeof(*pVal->%s)))\n"
 			"\t\tEGSP_TRY(_EgspSkipLabel(pLoader));\n"
 			"\t\tEGSP_TRY(_EgspRead%s(pLoader, pVal->%s));\n"
 			"\t}\n"

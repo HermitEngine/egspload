@@ -707,23 +707,28 @@ EgspResult _EgspPrintBuffer(EgspLoader* pLoader, void* pBuffer, size_t size)
 	EGSP_TRY(_EgspWriteString(pLoader, "\""));
 	uint8_t datum;
 	uint8_t* pData = pBuffer;
+	pLoader->heapSize += size;
 	for (size_t i = 0; i < size; ++i)
 	{
 		switch (i % 3)
 		{
 		case 0:
 			datum = (pData[i] & 0xFC) >> 2;
+			assert(datum < 64);
 			_EgspWriteChar(pLoader, b64[datum]);
-			datum = (pData[i] & 0x3) << 6;
+			datum = (pData[i] & 0x3) << 4;
 			break;
 		case 1:
 			datum |= (pData[i] & 0xF0) >> 4;
+			assert(datum < 64);
 			_EgspWriteChar(pLoader, b64[datum]);
 			datum = (pData[i] & 0x0F) << 2;
 			break;
 		case 2:
 			datum |= (pData[i] & 0xC0) >> 6;
+			assert(datum < 64);
 			_EgspWriteChar(pLoader, b64[datum]);
+			assert(datum < 64);
 			datum = (pData[i] & 0x3F);
 			_EgspWriteChar(pLoader, b64[datum]);
 			break;
@@ -755,23 +760,30 @@ EgspResult _EgspReadBuffer(EgspLoader* pLoader, void* pBuffer, size_t size)
 
 	chr = '\0';
 	int i = 0;
+	int j = 0;
 	uint8_t* pData = pBuffer;
 	while (i < size && chr != '"')
 	{
 		EGSP_TRY(CheckOverFlow(pLoader));
 		chr = pLoader->pData[pLoader->offset++];
-		switch (i % 4)
+		switch (j++ % 4)
 		{
 		case 0:
 			pData[i] = b64[chr] << 2;
 			break;
 		case 1:
-			pData[i++] |= (b64[chr] & 0x30) >> 6;
-			pData[i] = (b64[chr] & 0x0F) << 4;
+			pData[i++] |= (b64[chr] & 0x30) >> 4;
+			if (i < size)
+			{
+				pData[i] = (b64[chr] & 0x0F) << 4;
+			}
 			break;
 		case 2:
-			pData[i++] |= (b64[chr] & 0x3C) >> 4;
-			pData[i] = (b64[chr] & 0x03) << 6;
+			pData[i++] |= (b64[chr] & 0x3C) >> 2;
+			if (i < size)
+			{
+				pData[i] = (b64[chr] & 0x03) << 6;
+			}
 			break;
 		case 3:
 			pData[i++] |= b64[chr];
